@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spendwise — Personal Expense Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root {
+  --bg:        #f7f7f7;
+  --white:     #ffffff;
+  --surface:   #f0f0f0;
+  --surface2:  #e8e8e8;
+  --border:    #d4d4d4;
+  --border2:   #b8b8b8;
+  --black:     #0f0f0f;
+  --text:      #1a1a1a;
+  --text-mid:  #555555;
+  --text-dim:  #888888;
+  --text-light:#bbbbbb;
+  --income-text:  #1a5c2e;
+  --income-bg:    #edf7f0;
+  --income-border:#b8dfc5;
+  --expense-text: #7a1515;
+  --expense-bg:   #fdf0f0;
+  --expense-border:#e8bbbb;
+  --warn-text:    #7a4a00;
+  --warn-bg:      #fdf6ec;
+  --warn-border:  #e8d0a0;
+  --radius:    8px;
+  --radius-sm: 5px;
+  --font:      'Outfit', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+  --display:   'Syne', sans-serif;
+  --shadow:    0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;}
+#root{min-height:100vh;}
+
+/* ── AUTH ── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);}
+.auth-card{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:44px 40px;width:100%;max-width:400px;box-shadow:var(--shadow);}
+.auth-logo{font-family:var(--display);font-size:1.9rem;font-weight:800;color:var(--black);letter-spacing:-.02em;margin-bottom:4px;}
+.auth-tagline{font-size:0.82rem;color:var(--text-dim);margin-bottom:30px;}
+.auth-tabs{display:flex;gap:0;background:var(--surface);border-radius:var(--radius-sm);padding:3px;margin-bottom:24px;border:1px solid var(--border);}
+.auth-tab{flex:1;padding:8px;border:none;background:transparent;color:var(--text-dim);border-radius:4px;font-family:var(--font);font-size:0.83rem;cursor:pointer;transition:.15s;}
+.auth-tab.active{background:var(--white);color:var(--black);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:0.72rem;color:var(--text-dim);margin-bottom:5px;letter-spacing:.05em;text-transform:uppercase;font-weight:500;}
+.field input,.field select{width:100%;background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;color:var(--text);font-family:var(--font);font-size:0.9rem;outline:none;transition:.15s;}
+.field input:focus,.field select:focus{border-color:var(--black);}
+.field input::placeholder{color:var(--text-light);}
+.btn-primary{width:100%;padding:12px;background:var(--black);color:var(--white);border:2px solid var(--black);border-radius:var(--radius-sm);font-family:var(--display);font-size:0.95rem;font-weight:700;cursor:pointer;transition:.15s;letter-spacing:.02em;margin-top:4px;}
+.btn-primary:hover{background:var(--white);color:var(--black);}
+.auth-error{color:var(--expense-text);font-size:0.8rem;margin-bottom:10px;padding:8px 12px;background:var(--expense-bg);border:1px solid var(--expense-border);border-radius:var(--radius-sm);}
+.demo-link{text-align:center;margin-top:16px;font-size:0.78rem;color:var(--text-dim);}
+.demo-link span{color:var(--black);cursor:pointer;font-weight:600;text-decoration:underline;}
+
+/* ── APP LAYOUT ── */
+.app{display:grid;grid-template-columns:230px 1fr;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{background:var(--white);border-right:1px solid var(--border);padding:20px 14px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.logo{font-family:var(--display);font-size:1.4rem;font-weight:800;color:var(--black);letter-spacing:-.02em;padding:4px 10px 18px;border-bottom:2px solid var(--black);margin-bottom:12px;}
+.user-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;}
+.uc-row{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--black);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.8rem;font-weight:700;color:var(--white);flex-shrink:0;}
+.uc-name{font-size:0.86rem;font-weight:600;color:var(--black);}
+.uc-email{font-size:0.7rem;color:var(--text-dim);margin-top:1px;}
+.nav-section{font-size:0.62rem;color:var(--text-light);letter-spacing:.1em;text-transform:uppercase;padding:8px 10px 4px;margin-top:6px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:0.86rem;color:var(--text-mid);transition:.15s;border:none;background:transparent;width:100%;text-align:left;font-family:var(--font);}
+.nav-item:hover{background:var(--surface);color:var(--black);}
+.nav-item.active{background:var(--black);color:var(--white);font-weight:500;}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;opacity:.7;}
+.nav-item.active svg{opacity:1;}
+.nav-badge{margin-left:auto;background:var(--expense-bg);color:var(--expense-text);font-size:0.6rem;font-family:var(--mono);padding:2px 7px;border-radius:10px;border:1px solid var(--expense-border);}
+.nav-item.active .nav-badge{background:rgba(255,255,255,.15);color:var(--white);border-color:rgba(255,255,255,.3);}
+.sidebar-footer{margin-top:auto;border-top:1px solid var(--border);padding-top:14px;}
+.logout-btn{width:100%;padding:9px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text-mid);font-family:var(--font);font-size:0.82rem;cursor:pointer;transition:.15s;}
+.logout-btn:hover{border-color:var(--black);color:var(--black);}
+
+/* ── MAIN ── */
+.main{padding:28px 32px;overflow-y:auto;background:var(--bg);}
+.page-header{margin-bottom:24px;}
+.page-title{font-family:var(--display);font-size:1.7rem;font-weight:700;color:var(--black);letter-spacing:-.02em;}
+.page-sub{font-size:0.82rem;color:var(--text-dim);margin-top:3px;}
+
+/* ── STAT GRID ── */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px 18px 14px;position:relative;overflow:hidden;}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--border);}
+.stat-card.income-c::after{background:var(--income-text);}
+.stat-card.expense-c::after{background:var(--expense-text);}
+.stat-card.balance-c::after{background:var(--black);}
+.stat-card.savings-c::after{background:var(--warn-text);}
+.sc-label{font-size:0.68rem;color:var(--text-dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:7px;font-weight:500;}
+.sc-val{font-family:var(--display);font-size:1.75rem;font-weight:700;color:var(--black);}
+.sc-val.income-v{color:var(--income-text);}
+.sc-val.expense-v{color:var(--expense-text);}
+.sc-sub{font-size:0.7rem;color:var(--text-dim);margin-top:5px;}
+.sc-sub.pos{color:var(--income-text);}
+.sc-sub.neg{color:var(--expense-text);}
+
+/* ── SECTION CARD ── */
+.section-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:18px;}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-title{font-family:var(--display);font-size:1rem;font-weight:600;color:var(--black);display:flex;align-items:center;gap:8px;}
+.section-title::before{content:'';width:3px;height:14px;background:var(--black);border-radius:2px;}
+.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.search-wrap{position:relative;}
+.search-wrap input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px 8px 30px;color:var(--text);font-family:var(--mono);font-size:0.75rem;outline:none;width:220px;transition:.15s;}
+.search-wrap input:focus{border-color:var(--black);background:var(--white);}
+.search-wrap input::placeholder{color:var(--text-light);}
+.search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);}
+.search-ico svg{width:13px;height:13px;color:var(--text-dim);}
+.tb-btn{padding:7px 13px;background:var(--white);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text-mid);font-family:var(--font);font-size:0.78rem;cursor:pointer;transition:.15s;}
+.tb-btn:hover{border-color:var(--black);color:var(--black);}
+.tb-btn.primary{background:var(--black);color:var(--white);border-color:var(--black);}
+.tb-btn.primary:hover{background:#333;}
+.filter-chip{padding:6px 13px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text-mid);font-size:0.76rem;cursor:pointer;transition:.15s;font-family:var(--font);}
+.filter-chip.active{background:var(--black);color:var(--white);border-color:var(--black);}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:0.83rem;}
+thead tr{border-bottom:2px solid var(--black);}
+th{text-align:left;padding:9px 12px;font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;font-weight:500;cursor:pointer;user-select:none;}
+th:hover{color:var(--black);}
+tbody tr{border-bottom:1px solid var(--border);transition:.12s;cursor:pointer;}
+tbody tr:hover{background:var(--surface);}
+td{padding:11px 12px;color:var(--text-mid);}
+td.tx-title-cell{color:var(--black);font-weight:500;}
+td.mono{font-family:var(--mono);font-size:0.78rem;}
+.amount-cell{font-family:var(--display);font-size:0.95rem;font-weight:600;}
+.amount-cell.inc{color:var(--income-text);}
+.amount-cell.exp{color:var(--expense-text);}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:0.68rem;font-family:var(--mono);border:1px solid;}
+.badge.income{background:var(--income-bg);color:var(--income-text);border-color:var(--income-border);}
+.badge.expense{background:var(--expense-bg);color:var(--expense-text);border-color:var(--expense-border);}
+.badge.pending{background:var(--warn-bg);color:var(--warn-text);border-color:var(--warn-border);}
+.badge.neutral{background:var(--surface);color:var(--text-mid);border-color:var(--border2);}
+.act-btn{padding:4px 10px;border-radius:4px;border:1px solid var(--border);background:transparent;color:var(--text-dim);font-size:0.72rem;font-family:var(--font);cursor:pointer;transition:.15s;margin-right:4px;}
+.act-btn:hover{border-color:var(--black);color:var(--black);}
+.act-btn.del:hover{border-color:var(--expense-text);color:var(--expense-text);}
+.empty{text-align:center;padding:40px;color:var(--text-dim);font-size:0.85rem;}
+.empty-sub{font-size:0.75rem;margin-top:4px;color:var(--text-light);}
+
+/* ── CHARTS ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
+.chart-label{font-size:0.67rem;color:var(--text-dim);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;font-family:var(--mono);}
+
+/* BAR CHART */
+.bar-chart{display:flex;align-items:flex-end;gap:6px;height:110px;}
+.bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end;}
+.bar-pair{display:flex;gap:2px;align-items:flex-end;justify-content:center;}
+.bar{width:11px;border-radius:3px 3px 0 0;min-height:2px;transition:height .4s ease;}
+.bar.inc{background:var(--black);}
+.bar.exp{background:var(--border2);}
+.bar-lbl{font-size:0.62rem;color:var(--text-dim);font-family:var(--mono);}
+.chart-legend{display:flex;gap:14px;margin-top:10px;}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:0.72rem;color:var(--text-mid);}
+.leg-dot{width:9px;height:9px;border-radius:2px;}
+.leg-dot.inc{background:var(--black);}
+.leg-dot.exp{background:var(--border2);}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:18px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;flex:1;}
+.dleg{display:flex;align-items:center;gap:8px;font-size:0.78rem;}
+.dleg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.dleg-name{flex:1;color:var(--text-mid);}
+.dleg-pct{color:var(--black);font-family:var(--mono);font-size:0.72rem;font-weight:500;}
+
+/* ── BUDGET ── */
+.budget-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.budget-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.bc-cat{font-size:0.9rem;font-weight:600;color:var(--black);margin-bottom:4px;}
+.bc-amounts{display:flex;justify-content:space-between;font-size:0.74rem;color:var(--text-dim);margin-bottom:9px;}
+.progress-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;transition:width .5s ease;background:var(--black);}
+.progress-fill.warn{background:var(--warn-text);}
+.progress-fill.over{background:var(--expense-text);}
+.bc-status{font-size:0.72rem;margin-top:6px;font-family:var(--mono);}
+.bc-status.ok{color:var(--income-text);}
+.bc-status.warn{color:var(--warn-text);}
+.bc-status.over{color:var(--expense-text);}
+
+/* ── GOALS ── */
+.goals-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.goal-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;}
+.gc-name{font-size:0.9rem;font-weight:600;color:var(--black);}
+.gc-target{font-size:0.72rem;color:var(--text-dim);margin-top:2px;font-family:var(--mono);}
+.gc-progress{margin-top:10px;}
+.gc-bar{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px;}
+.gc-fill{height:100%;border-radius:3px;background:var(--black);transition:width .5s ease;}
+.gc-pct{font-size:0.72rem;color:var(--text-mid);display:flex;justify-content:space-between;}
+.gc-pct span{font-family:var(--mono);color:var(--black);font-weight:600;}
+.goal-deadline{font-size:0.68rem;color:var(--text-light);margin-top:8px;font-family:var(--mono);}
+
+/* ── REPORTS ── */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.report-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.rs-label{font-size:0.68rem;color:var(--text-dim);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;}
+.rs-val{font-family:var(--display);font-size:1.4rem;font-weight:700;color:var(--black);}
+.rs-sub{font-size:0.72rem;color:var(--text-dim);margin-top:4px;}
+.report-table{width:100%;border-collapse:collapse;font-size:0.82rem;margin-top:8px;}
+.report-table th{text-align:left;padding:8px 10px;font-size:0.65rem;color:var(--text-dim);letter-spacing:.07em;text-transform:uppercase;border-bottom:2px solid var(--black);}
+.report-table td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text-mid);}
+.report-table td:first-child{color:var(--black);font-weight:500;}
+.report-table tr:hover td{background:var(--surface);}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:460px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,.15);}
+.modal-title{font-family:var(--display);font-size:1.3rem;font-weight:700;margin-bottom:20px;color:var(--black);}
+.row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.type-toggle{display:flex;gap:0;background:var(--surface);border-radius:var(--radius-sm);padding:3px;margin-bottom:14px;border:1px solid var(--border);}
+.type-btn{flex:1;padding:9px;border:none;background:transparent;color:var(--text-dim);border-radius:4px;font-family:var(--font);font-size:0.84rem;cursor:pointer;transition:.2s;font-weight:500;}
+.type-btn.expense.active{background:var(--expense-bg);color:var(--expense-text);border:1px solid var(--expense-border);}
+.type-btn.income.active{background:var(--income-bg);color:var(--income-text);border:1px solid var(--income-border);}
+.modal-footer{display:flex;gap:10px;margin-top:20px;}
+.btn-cancel{flex:1;padding:11px;background:transparent;border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text-mid);font-family:var(--font);cursor:pointer;transition:.15s;}
+.btn-cancel:hover{border-color:var(--black);color:var(--black);}
+.btn-save{flex:2;padding:11px;background:var(--black);border:2px solid var(--black);border-radius:var(--radius-sm);color:var(--white);font-family:var(--display);font-size:0.95rem;font-weight:700;cursor:pointer;transition:.15s;}
+.btn-save:hover{background:var(--white);color:var(--black);}
+
+/* ── SETTINGS ── */
+.settings-section{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;}
+.settings-section h3{font-size:0.68rem;color:var(--text-dim);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;font-family:var(--mono);}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);}
+.settings-row:last-child{border-bottom:none;}
+.settings-label{font-size:0.86rem;color:var(--black);}
+.settings-val{font-size:0.82rem;color:var(--text-mid);}
+.toggle{width:42px;height:22px;background:var(--border2);border-radius:11px;cursor:pointer;position:relative;transition:.2s;border:none;flex-shrink:0;}
+.toggle.on{background:var(--black);}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.toggle.on::after{left:23px;}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border);margin:8px 0;}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.68rem;font-family:var(--mono);background:var(--surface);color:var(--text-mid);border:1px solid var(--border);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.fade-in{animation:fadeUp .25s ease forwards;}
+.anim:nth-child(1){animation:fadeUp .25s .04s ease both;}
+.anim:nth-child(2){animation:fadeUp .25s .08s ease both;}
+.anim:nth-child(3){animation:fadeUp .25s .12s ease both;}
+.anim:nth-child(4){animation:fadeUp .25s .16s ease both;}
+
+/* ── MOBILE NAV ── */
+@media(max-width:768px){
+  .app{grid-template-columns:1fr;}
+  .sidebar{display:none;}
+  .main{padding:16px 14px 80px;}
+  .stat-grid{grid-template-columns:1fr 1fr;}
+  .charts-grid{grid-template-columns:1fr;}
+  .row-2{grid-template-columns:1fr;}
+  .report-grid{grid-template-columns:1fr;}
+}
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--white);border-top:2px solid var(--black);z-index:100;}
+@media(max-width:768px){.mob-nav{display:flex;}}
+.mob-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 0;font-size:0.62rem;color:var(--text-dim);cursor:pointer;border:none;background:transparent;font-family:var(--font);}
+.mob-item.active{color:var(--black);font-weight:600;}
+.mob-item svg{width:20px;height:20px;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useCallback } = React;
+
+// ── ICONS (pure SVG, no emoji) ──────────────────────────────────────────────
+const Icon = {
+  dashboard: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>,
+  transactions: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/><path d="M9 12h6M9 16h4"/></svg>,
+  budget: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>,
+  goals: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>,
+  reports: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>,
+  settings: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 0 12 2a10 10 0 0 0-7.07 2.93"/><path d="M4.93 19.07A10 10 0 0 0 12 22a10 10 0 0 0 7.07-2.93"/><path d="M2 12h2M20 12h2M12 2v2M12 20v2"/></svg>,
+  search: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>,
+  plus: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 5v14M5 12h14"/></svg>,
+  edit: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
+  trash: ()=><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>,
+};
+
+// ── DATA ────────────────────────────────────────────────────────────────────
+const CATEGORIES = {
+  expense: ['Food & Dining','Transport','Housing','Health','Entertainment','Education','Shopping','Utilities','Travel','Subscriptions','Other'],
+  income:  ['Salary','Freelance','Investments','Business','Gifts','Other']
+};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const BUDGET_DEFAULTS = [
+  {category:'Food & Dining', limit:6000},
+  {category:'Transport',     limit:3000},
+  {category:'Entertainment', limit:2000},
+  {category:'Utilities',     limit:2500},
+  {category:'Shopping',      limit:4000},
+  {category:'Health',        limit:2000},
+];
+const GOAL_DEFAULTS = [
+  {id:1, name:'Emergency Fund',   target:100000, saved:42000, deadline:'2026-12-31'},
+  {id:2, name:'Vacation — Goa',   target:30000,  saved:18500, deadline:'2026-06-30'},
+  {id:3, name:'New Laptop',       target:80000,  saved:25000, deadline:'2026-09-30'},
+  {id:4, name:'Investment Fund',  target:200000, saved:60000, deadline:'2027-03-31'},
+];
+
+const fmt = n => '₹' + Math.abs(n).toLocaleString('en-IN');
+const fmtDate = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const fmtShort = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+
+function useLS(key, init){
+  const [val,setVal]=useState(()=>{try{const s=localStorage.getItem(key);return s?JSON.parse(s):init;}catch{return init;}});
+  useEffect(()=>{try{localStorage.setItem(key,JSON.stringify(val));}catch{}},[key,val]);
+  return [val,setVal];
+}
+
+function genSampleData(){
+  const now = new Date();
+  const rows = [];
+  let id = 1;
+  const incomes = [
+    {title:'Monthly Salary',category:'Salary',amount:85000},
+    {title:'Freelance Project',category:'Freelance',amount:12000},
+  ];
+  const expenses = [
+    {title:'Grocery — Dmart',category:'Food & Dining',amount:3200},
+    {title:'Netflix',category:'Subscriptions',amount:649},
+    {title:'Electricity Bill',category:'Utilities',amount:1800},
+    {title:'Metro Pass',category:'Transport',amount:500},
+    {title:'Restaurant — Barbeque Nation',category:'Food & Dining',amount:2200},
+    {title:'Udemy Course',category:'Education',amount:2999},
+    {title:'Gym Membership',category:'Health',amount:1500},
+    {title:'Amazon Order',category:'Shopping',amount:2500},
+    {title:'House Rent',category:'Housing',amount:18000},
+    {title:'Petrol',category:'Transport',amount:2000},
+    {title:'Spotify',category:'Subscriptions',amount:119},
+    {title:'Doctor Visit',category:'Health',amount:800},
+  ];
+  for(let m=5;m>=0;m--){
+    incomes.forEach(inc=>{
+      rows.push({id:id++,type:'income',title:inc.title,category:inc.category,amount:inc.amount+Math.round((Math.random()-.4)*4000),date:new Date(now.getFullYear(),now.getMonth()-m,Math.ceil(Math.random()*5)+1).toISOString().split('T')[0],note:'',recurring:inc.title==='Monthly Salary'});
+    });
+    expenses.forEach(exp=>{
+      rows.push({id:id++,type:'expense',title:exp.title,category:exp.category,amount:exp.amount+Math.round((Math.random()-.3)*400),date:new Date(now.getFullYear(),now.getMonth()-m,Math.ceil(Math.random()*26)+1).toISOString().split('T')[0],note:'',recurring:false});
+    });
+  }
+  return rows.sort((a,b)=>new Date(b.date)-new Date(a.date));
+}
+
+// ── AUTH ─────────────────────────────────────────────────────────────────────
+function Auth({onLogin}){
+  const [tab,setTab]=useState('login');
+  const [name,setName]=useState('');
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [err,setErr]=useState('');
+  const [users,setUsers]=useLS('sw_users',[]);
+
+  const handle=()=>{
+    setErr('');
+    if(!email||!pass){setErr('Please fill all fields.');return;}
+    if(tab==='signup'){
+      if(!name){setErr('Name is required.');return;}
+      if(users.find(u=>u.email===email)){setErr('Account already exists. Please sign in.');return;}
+      const u={name,email,pass,id:Date.now()};
+      setUsers(p=>[...p,u]);
+      onLogin(u);
+    } else {
+      const u=users.find(u=>u.email===email&&u.pass===pass);
+      if(!u){setErr('Invalid email or password.');return;}
+      onLogin(u);
+    }
+  };
+
+  return(
+    <div className="auth-wrap">
+      <div className="auth-card fade-in">
+        <div className="auth-logo">Spendwise</div>
+        <div className="auth-tagline">Track every rupee. Grow every goal.</div>
+        <div className="auth-tabs">
+          <button className={`auth-tab ${tab==='login'?'active':''}`} onClick={()=>{setTab('login');setErr('');}}>Sign In</button>
+          <button className={`auth-tab ${tab==='signup'?'active':''}`} onClick={()=>{setTab('signup');setErr('');}}>Sign Up</button>
+        </div>
+        {err&&<div className="auth-error">{err}</div>}
+        {tab==='signup'&&<div className="field"><label>Full Name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="Your full name"/></div>}
+        <div className="field"><label>Email</label><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@email.com"/></div>
+        <div className="field"><label>Password</label><input type="password" value={pass} onChange={e=>setPass(e.target.value)} placeholder="••••••••" onKeyDown={e=>e.key==='Enter'&&handle()}/></div>
+        <button className="btn-primary" onClick={handle}>{tab==='login'?'Sign In':'Create Account'}</button>
+        <div className="demo-link">or <span onClick={()=>onLogin({name:'Demo User',email:'demo@spendwise.app',id:'demo'})}>continue with Demo account</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ── TRANSACTION MODAL ─────────────────────────────────────────────────────────
+function TxModal({tx,onSave,onClose}){
+  const [type,setType]=useState(tx?.type||'expense');
+  const [title,setTitle]=useState(tx?.title||'');
+  const [amount,setAmount]=useState(tx?.amount||'');
+  const [category,setCategory]=useState(tx?.category||'');
+  const [date,setDate]=useState(tx?.date||new Date().toISOString().split('T')[0]);
+  const [note,setNote]=useState(tx?.note||'');
+  const [recurring,setRecurring]=useState(tx?.recurring||false);
+
+  const save=()=>{
+    if(!title.trim()||!amount||!category||!date)return;
+    onSave({id:tx?.id||Date.now(),type,title:title.trim(),amount:parseFloat(amount),category,date,note,recurring});
+  };
+
+  return(
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal fade-in">
+        <div className="modal-title">{tx?'Edit Transaction':'New Transaction'}</div>
+        <div className="type-toggle">
+          <button className={`type-btn expense ${type==='expense'?'active':''}`} onClick={()=>{setType('expense');setCategory('');}}>Expense</button>
+          <button className={`type-btn income ${type==='income'?'active':''}`} onClick={()=>{setType('income');setCategory('');}}>Income</button>
+        </div>
+        <div className="field"><label>Title</label><input value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Grocery — Dmart"/></div>
+        <div className="row-2">
+          <div className="field"><label>Amount (INR)</label><input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0"/></div>
+          <div className="field"><label>Date</label><input type="date" value={date} onChange={e=>setDate(e.target.value)}/></div>
+        </div>
+        <div className="field"><label>Category</label>
+          <select value={category} onChange={e=>setCategory(e.target.value)}>
+            <option value="">Select category</option>
+            {CATEGORIES[type].map(c=><option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="field"><label>Note (optional)</label><input value={note} onChange={e=>setNote(e.target.value)} placeholder="Any details..."/></div>
+        <div className="field">
+          <label style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer'}}>
+            <input type="checkbox" checked={recurring} onChange={e=>setRecurring(e.target.checked)} style={{width:'auto',marginRight:0}}/>
+            Mark as recurring
+          </label>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-cancel" onClick={onClose}>Cancel</button>
+          <button className="btn-save" onClick={save}>Save Transaction</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BAR CHART ─────────────────────────────────────────────────────────────────
+function BarChart({txns}){
+  const now = new Date();
+  const months = Array.from({length:6},(_,i)=>{
+    const d = new Date(now.getFullYear(),now.getMonth()-5+i,1);
+    return {label:MONTHS[d.getMonth()],month:d.getMonth(),year:d.getFullYear()};
+  });
+  const data = months.map(m=>{
+    const inc = txns.filter(t=>t.type==='income'&&new Date(t.date).getMonth()===m.month&&new Date(t.date).getFullYear()===m.year).reduce((s,t)=>s+t.amount,0);
+    const exp = txns.filter(t=>t.type==='expense'&&new Date(t.date).getMonth()===m.month&&new Date(t.date).getFullYear()===m.year).reduce((s,t)=>s+t.amount,0);
+    return {...m,inc,exp};
+  });
+  const max = Math.max(...data.map(d=>Math.max(d.inc,d.exp)),1);
+  return(
+    <div className="section-card">
+      <div className="chart-label">Income vs Expenses — 6 months</div>
+      <div className="bar-chart">
+        {data.map(d=>(
+          <div key={d.label} className="bar-group">
+            <div className="bar-pair">
+              <div className="bar inc" style={{height:`${(d.inc/max)*100}px`}} title={fmt(d.inc)}/>
+              <div className="bar exp" style={{height:`${(d.exp/max)*100}px`}} title={fmt(d.exp)}/>
+            </div>
+            <div className="bar-lbl">{d.label}</div>
+          </div>
+        ))}
+      </div>
+      <div className="chart-legend">
+        <div className="leg-item"><div className="leg-dot inc"/><span>Income</span></div>
+        <div className="leg-item"><div className="leg-dot exp"/><span>Expenses</span></div>
+      </div>
+    </div>
+  );
+}
+
+// ── DONUT CHART ───────────────────────────────────────────────────────────────
+function DonutChart({txns}){
+  const cats = {};
+  txns.filter(t=>t.type==='expense').forEach(t=>{cats[t.category]=(cats[t.category]||0)+t.amount;});
+  const total = Object.values(cats).reduce((s,v)=>s+v,0)||1;
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const grays = ['#111','#444','#777','#999','#bbb','#ddd'];
+  let cum=0;
+  const R=50,r=28,cx=60,cy=60;
+  const toRad=a=>a*Math.PI/180;
+  const arcs = sorted.map(([cat,val],i)=>{
+    const angle=(val/total)*360;
+    const s=cum; cum+=angle;
+    const x1=cx+R*Math.sin(toRad(s)),y1=cy-R*Math.cos(toRad(s));
+    const x2=cx+R*Math.sin(toRad(s+angle)),y2=cy-R*Math.cos(toRad(s+angle));
+    const x3=cx+r*Math.sin(toRad(s+angle)),y3=cy-r*Math.cos(toRad(s+angle));
+    const x4=cx+r*Math.sin(toRad(s)),y4=cy-r*Math.cos(toRad(s));
+    const lg=angle>180?1:0;
+    return {cat,val,color:grays[i],d:`M ${x1} ${y1} A ${R} ${R} 0 ${lg} 1 ${x2} ${y2} L ${x3} ${y3} A ${r} ${r} 0 ${lg} 0 ${x4} ${y4} Z`};
+  });
+  return(
+    <div className="section-card">
+      <div className="chart-label">Spending by Category (this month)</div>
+      {sorted.length===0?<div style={{color:'var(--text-dim)',fontSize:'0.84rem'}}>No expense data this month.</div>:(
+      <div className="donut-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120" style={{flexShrink:0}}>
+          {arcs.map((a,i)=><path key={i} d={a.d} fill={a.color}/>)}
+          <circle cx="60" cy="60" r="22" fill="var(--white)"/>
+        </svg>
+        <div className="donut-legend">
+          {arcs.map((a,i)=>(
+            <div key={i} className="dleg">
+              <div className="dleg-dot" style={{background:a.color}}/>
+              <span className="dleg-name">{a.cat}</span>
+              <span className="dleg-pct">{((a.val/total)*100).toFixed(0)}%</span>
+            </div>
+          ))}
+        </div>
+      </div>)}
+    </div>
+  );
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function Dashboard({txns,onAdd}){
+  const now = new Date();
+  const thisMonth = txns.filter(t=>{const d=new Date(t.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const prevMonth = txns.filter(t=>{const d=new Date(t.date);return d.getMonth()===now.getMonth()-1&&d.getFullYear()===now.getFullYear();});
+  const totInc = thisMonth.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totExp = thisMonth.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const prevInc = prevMonth.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const prevExp = prevMonth.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal = totInc - totExp;
+  const savRate = totInc>0?((totInc-totExp)/totInc*100).toFixed(1):0;
+  const recent = txns.slice(0,6);
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Dashboard</div>
+        <div className="page-sub">{now.toLocaleString('default',{month:'long',year:'numeric'})} — financial overview</div>
+      </div>
+
+      <div className="stat-grid">
+        <div className="stat-card income-c anim">
+          <div className="sc-label">Total Income</div>
+          <div className="sc-val income-v">{fmt(totInc)}</div>
+          <div className={`sc-sub ${totInc>=prevInc?'pos':'neg'}`}>{totInc>=prevInc?'+ ':'- '}{fmt(Math.abs(totInc-prevInc))} vs last month</div>
+        </div>
+        <div className="stat-card expense-c anim">
+          <div className="sc-label">Total Expenses</div>
+          <div className="sc-val expense-v">{fmt(totExp)}</div>
+          <div className={`sc-sub ${totExp<=prevExp?'pos':'neg'}`}>{totExp<=prevExp?'- ':'+ '}{fmt(Math.abs(totExp-prevExp))} vs last month</div>
+        </div>
+        <div className="stat-card balance-c anim">
+          <div className="sc-label">Net Balance</div>
+          <div className="sc-val">{bal>=0?'+':''}{fmt(bal)}</div>
+          <div className="sc-sub">{thisMonth.length} transactions this month</div>
+        </div>
+        <div className="stat-card savings-c anim">
+          <div className="sc-label">Savings Rate</div>
+          <div className="sc-val">{savRate}%</div>
+          <div className="sc-sub">of income saved</div>
+        </div>
+      </div>
+
+      <div className="charts-grid">
+        <BarChart txns={txns}/>
+        <DonutChart txns={thisMonth}/>
+      </div>
+
+      <div className="section-card">
+        <div className="section-head">
+          <div className="section-title">Recent Transactions</div>
+          <button className="tb-btn primary" onClick={onAdd}>+ Add Transaction</button>
+        </div>
+        <div className="tbl-wrap">
+          <table>
+            <thead><tr><th>Title</th><th>Category</th><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
+            <tbody>
+              {recent.map(t=>(
+                <tr key={t.id}>
+                  <td className="tx-title-cell">{t.title}{t.recurring&&<span className="tag" style={{marginLeft:8}}>recurring</span>}</td>
+                  <td><span className="badge neutral">{t.category}</span></td>
+                  <td className="mono">{fmtShort(t.date)}</td>
+                  <td><span className={`badge ${t.type}`}>{t.type}</span></td>
+                  <td className={`amount-cell ${t.type==='income'?'inc':'exp'}`}>{t.type==='income'?'+':'-'}{fmt(t.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── TRANSACTIONS PAGE ─────────────────────────────────────────────────────────
+function Transactions({txns,onAdd,onEdit,onDelete}){
+  const [filter,setFilter]=useState('all');
+  const [search,setSearch]=useState('');
+  const [sortField,setSortField]=useState('date');
+  const [sortDir,setSortDir]=useState('desc');
+  const [catFilter,setCatFilter]=useState('all');
+
+  const allCats = useMemo(()=>['all',...new Set(txns.map(t=>t.category))],'txns');
+
+  const sorted = useMemo(()=>{
+    let list = txns.filter(t=>{
+      if(filter!=='all'&&t.type!==filter)return false;
+      if(catFilter!=='all'&&t.category!==catFilter)return false;
+      if(search){const q=search.toLowerCase();if(!t.title.toLowerCase().includes(q)&&!t.category.toLowerCase().includes(q))return false;}
+      return true;
+    });
+    list = [...list].sort((a,b)=>{
+      let av=a[sortField],bv=b[sortField];
+      if(sortField==='date'){av=new Date(av);bv=new Date(bv);}
+      return sortDir==='asc'?(av>bv?1:-1):(av<bv?1:-1);
+    });
+    return list;
+  },[txns,filter,catFilter,search,sortField,sortDir]);
+
+  const toggleSort=f=>{if(sortField===f)setSortDir(d=>d==='asc'?'desc':'asc');else{setSortField(f);setSortDir('desc');}};
+  const sortIcon=f=>sortField===f?(sortDir==='asc'?' ^':' v'):'';
+
+  const totalInc = sorted.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExp = sorted.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Transactions</div>
+        <div className="page-sub">{txns.length} total transactions</div>
+      </div>
+
+      <div className="stat-grid" style={{gridTemplateColumns:'repeat(3,1fr)'}}>
+        <div className="stat-card anim"><div className="sc-label">Filtered Results</div><div className="sc-val">{sorted.length}</div></div>
+        <div className="stat-card income-c anim"><div className="sc-label">Filtered Income</div><div className="sc-val income-v">{fmt(totalInc)}</div></div>
+        <div className="stat-card expense-c anim"><div className="sc-label">Filtered Expenses</div><div className="sc-val expense-v">{fmt(totalExp)}</div></div>
+      </div>
+
+      <div className="section-card">
+        <div className="section-head">
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',flex:1}}>
+            {['all','income','expense'].map(f=><button key={f} className={`filter-chip ${filter===f?'active':''}`} onClick={()=>setFilter(f)}>{f.charAt(0).toUpperCase()+f.slice(1)}</button>)}
+            <div className="search-wrap"><span className="search-ico"><Icon.search/></span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search transactions..."/></div>
+          </div>
+          <button className="tb-btn primary" onClick={onAdd}>+ Add</button>
+        </div>
+        <div style={{marginBottom:12}}>
+          <select style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--radius-sm)',padding:'6px 10px',color:'var(--text)',fontFamily:'var(--font)',fontSize:'0.78rem',outline:'none'}} value={catFilter} onChange={e=>setCatFilter(e.target.value)}>
+            <option value="all">All Categories</option>
+            {[...new Set(txns.map(t=>t.category))].map(c=><option key={c}>{c}</option>)}
+          </select>
+        </div>
+        <div className="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onClick={()=>toggleSort('title')}>Title{sortIcon('title')}</th>
+                <th>Category</th>
+                <th onClick={()=>toggleSort('date')}>Date{sortIcon('date')}</th>
+                <th>Type</th>
+                <th onClick={()=>toggleSort('amount')}>Amount{sortIcon('amount')}</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length===0?<tr><td colSpan="6"><div className="empty"><div>No transactions found.</div><div className="empty-sub">Try adjusting your filters or add a new transaction.</div></div></td></tr>
+              :sorted.map(t=>(
+                <tr key={t.id}>
+                  <td className="tx-title-cell">{t.title}{t.recurring&&<span className="tag" style={{marginLeft:8}}>rec</span>}{t.note&&<span className="tag" style={{marginLeft:4}}>note</span>}</td>
+                  <td><span className="badge neutral">{t.category}</span></td>
+                  <td className="mono">{fmtShort(t.date)}</td>
+                  <td><span className={`badge ${t.type}`}>{t.type}</span></td>
+                  <td className={`amount-cell ${t.type==='income'?'inc':'exp'}`}>{t.type==='income'?'+':'-'}{fmt(t.amount)}</td>
+                  <td>
+                    <button className="act-btn" onClick={()=>onEdit(t)} title="Edit"><Icon.edit/></button>
+                    <button className="act-btn del" onClick={()=>onDelete(t.id)} title="Delete"><Icon.trash/></button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── BUDGET PAGE ───────────────────────────────────────────────────────────────
+function Budgets({txns}){
+  const [budgets,setBudgets]=useLS('sw_budgets',BUDGET_DEFAULTS);
+  const [editing,setEditing]=useState(null);
+  const now = new Date();
+  const thisMonth = txns.filter(t=>{const d=new Date(t.date);return t.type==='expense'&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const spent = cat=>thisMonth.filter(t=>t.category===cat).reduce((s,t)=>s+t.amount,0);
+  const totalBudget = budgets.reduce((s,b)=>s+b.limit,0);
+  const totalSpent = budgets.reduce((s,b)=>s+spent(b.category),0);
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Budgets</div>
+        <div className="page-sub">Monthly spending limits for {now.toLocaleString('default',{month:'long'})}</div>
+      </div>
+
+      <div className="stat-grid" style={{gridTemplateColumns:'repeat(3,1fr)',marginBottom:22}}>
+        <div className="stat-card anim"><div className="sc-label">Total Budget</div><div className="sc-val">{fmt(totalBudget)}</div></div>
+        <div className="stat-card expense-c anim"><div className="sc-label">Total Spent</div><div className="sc-val expense-v">{fmt(totalSpent)}</div></div>
+        <div className="stat-card anim"><div className="sc-label">Remaining</div><div className="sc-val">{fmt(totalBudget-totalSpent)}</div></div>
+      </div>
+
+      <div className="budget-grid">
+        {budgets.map(b=>{
+          const s=spent(b.category),pct=Math.min((s/b.limit)*100,100);
+          const status=pct>=100?'over':pct>=80?'warn':'ok';
+          return(
+            <div key={b.category} className="budget-card anim">
+              <div className="section-head" style={{marginBottom:10}}>
+                <div className="bc-cat">{b.category}</div>
+                {editing===b.category
+                  ?<div style={{display:'flex',gap:6}}>
+                      <input type="number" defaultValue={b.limit} id={`bl-${b.category}`} style={{width:90,padding:'4px 8px',border:'1px solid var(--border)',borderRadius:4,fontFamily:'var(--mono)',fontSize:'0.78rem'}}/>
+                      <button className="tb-btn primary" style={{padding:'4px 8px',fontSize:'0.75rem'}} onClick={()=>{const v=parseFloat(document.getElementById(`bl-${b.category}`).value);if(v>0)setBudgets(p=>p.map(x=>x.category===b.category?{...x,limit:v}:x));setEditing(null);}}>Save</button>
+                    </div>
+                  :<button className="act-btn" onClick={()=>setEditing(b.category)}>Edit</button>}
+              </div>
+              <div className="bc-amounts"><span>{fmt(s)} spent</span><span>{fmt(b.limit)} limit</span></div>
+              <div className="progress-bar"><div className={`progress-fill ${status}`} style={{width:`${pct}%`}}/></div>
+              <div className={`bc-status ${status}`}>
+                {status==='over'?`Over by ${fmt(s-b.limit)}`:status==='warn'?`${fmt(b.limit-s)} remaining — watch out`:`${fmt(b.limit-s)} remaining`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── GOALS PAGE ────────────────────────────────────────────────────────────────
+function Goals(){
+  const [goals,setGoals]=useLS('sw_goals',GOAL_DEFAULTS);
+  const [modal,setModal]=useState(null);
+
+  const saveGoal=g=>{
+    setGoals(p=>modal.id?p.map(x=>x.id===g.id?g:x):[...p,{...g,id:Date.now()}]);
+    setModal(null);
+  };
+  const deleteGoal=id=>setGoals(p=>p.filter(x=>x.id!==id));
+  const addSavings=(id,amt)=>setGoals(p=>p.map(x=>x.id===id?{...x,saved:Math.min(x.saved+amt,x.target)}:x));
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Savings Goals</div>
+        <div className="page-sub">Track your financial targets and milestones</div>
+      </div>
+      <div style={{display:'flex',justifyContent:'flex-end',marginBottom:18}}>
+        <button className="tb-btn primary" onClick={()=>setModal({})}>+ New Goal</button>
+      </div>
+      <div className="goals-grid">
+        {goals.map(g=>{
+          const pct=Math.min((g.saved/g.target)*100,100);
+          const done=pct>=100;
+          return(
+            <div key={g.id} className="goal-card anim">
+              <div className="section-head" style={{marginBottom:4}}>
+                <div className="gc-name">{g.name}</div>
+                <div style={{display:'flex',gap:4}}>
+                  <button className="act-btn" onClick={()=>setModal(g)}>Edit</button>
+                  <button className="act-btn del" onClick={()=>deleteGoal(g.id)}>Delete</button>
+                </div>
+              </div>
+              <div className="gc-target">{fmt(g.saved)} of {fmt(g.target)}</div>
+              <div className="gc-progress">
+                <div className="gc-bar"><div className="gc-fill" style={{width:`${pct}%`}}/></div>
+                <div className="gc-pct"><span>{pct.toFixed(1)}% complete</span><span className={done?'':''} style={{color:done?'var(--income-text)':'var(--text-mid)'}}>{done?'Achieved!':fmt(g.target-g.saved)+' to go'}</span></div>
+              </div>
+              <div className="goal-deadline">Target: {fmtDate(g.deadline)}</div>
+              {!done&&<div style={{marginTop:10,display:'flex',gap:6}}>
+                {[500,1000,5000].map(amt=>(
+                  <button key={amt} className="tb-btn" style={{fontSize:'0.72rem',padding:'5px 10px'}} onClick={()=>addSavings(g.id,amt)}>+{fmt(amt)}</button>
+                ))}
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+
+      {modal!==null&&(
+        <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(null)}>
+          <div className="modal fade-in">
+            <div className="modal-title">{modal.id?'Edit Goal':'New Savings Goal'}</div>
+            <GoalForm goal={modal} onSave={saveGoal} onClose={()=>setModal(null)}/>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GoalForm({goal,onSave,onClose}){
+  const [name,setName]=useState(goal.name||'');
+  const [target,setTarget]=useState(goal.target||'');
+  const [saved,setSaved]=useState(goal.saved||0);
+  const [deadline,setDeadline]=useState(goal.deadline||'');
+  return(
+    <>
+      <div className="field"><label>Goal Name</label><input value={name} onChange={e=>setName(e.target.value)} placeholder="e.g. Emergency Fund"/></div>
+      <div className="row-2">
+        <div className="field"><label>Target Amount</label><input type="number" value={target} onChange={e=>setTarget(e.target.value)}/></div>
+        <div className="field"><label>Saved So Far</label><input type="number" value={saved} onChange={e=>setSaved(e.target.value)}/></div>
+      </div>
+      <div className="field"><label>Target Date</label><input type="date" value={deadline} onChange={e=>setDeadline(e.target.value)}/></div>
+      <div className="modal-footer">
+        <button className="btn-cancel" onClick={onClose}>Cancel</button>
+        <button className="btn-save" onClick={()=>{if(!name||!target||!deadline)return;onSave({...goal,name,target:parseFloat(target),saved:parseFloat(saved),deadline});}}>Save Goal</button>
+      </div>
+    </>
+  );
+}
+
+// ── REPORTS PAGE ──────────────────────────────────────────────────────────────
+function Reports({txns}){
+  const [period,setPeriod]=useState('month');
+  const now = new Date();
+  const filtered = useMemo(()=>{
+    if(period==='month') return txns.filter(t=>{const d=new Date(t.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+    if(period==='quarter') return txns.filter(t=>{const d=new Date(t.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()>=(now.getMonth()-2);});
+    return txns.filter(t=>new Date(t.date).getFullYear()===now.getFullYear());
+  },[txns,period]);
+
+  const totInc = filtered.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totExp = filtered.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const bal = totInc-totExp;
+  const avgTx = filtered.length>0?(totExp/filtered.filter(t=>t.type==='expense').length)||0:0;
+
+  const byCategory = {};
+  filtered.filter(t=>t.type==='expense').forEach(t=>{byCategory[t.category]=(byCategory[t.category]||0)+t.amount;});
+  const catRows = Object.entries(byCategory).sort((a,b)=>b[1]-a[1]);
+
+  const recurring = filtered.filter(t=>t.recurring);
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Reports</div>
+        <div className="page-sub">Financial analysis and insights</div>
+      </div>
+
+      <div className="toolbar" style={{marginBottom:18}}>
+        {['month','quarter','year'].map(p=><button key={p} className={`filter-chip ${period===p?'active':''}`} onClick={()=>setPeriod(p)}>{p.charAt(0).toUpperCase()+p.slice(1)}</button>)}
+      </div>
+
+      <div className="report-grid" style={{marginBottom:18}}>
+        <div className="report-stat anim"><div className="rs-label">Total Income</div><div className="rs-val" style={{color:'var(--income-text)'}}>{fmt(totInc)}</div><div className="rs-sub">{filtered.filter(t=>t.type==='income').length} transactions</div></div>
+        <div className="report-stat anim"><div className="rs-label">Total Expenses</div><div className="rs-val" style={{color:'var(--expense-text)'}}>{fmt(totExp)}</div><div className="rs-sub">{filtered.filter(t=>t.type==='expense').length} transactions</div></div>
+        <div className="report-stat anim"><div className="rs-label">Net Savings</div><div className="rs-val">{bal>=0?'+':''}{fmt(bal)}</div><div className="rs-sub">{totInc>0?((bal/totInc)*100).toFixed(1):0}% savings rate</div></div>
+        <div className="report-stat anim"><div className="rs-label">Avg Expense</div><div className="rs-val">{fmt(Math.round(avgTx))}</div><div className="rs-sub">per transaction</div></div>
+      </div>
+
+      <div className="charts-grid">
+        <div className="section-card">
+          <div className="chart-label">Top Spending Categories</div>
+          {catRows.length===0?<div style={{color:'var(--text-dim)',fontSize:'0.84rem'}}>No data.</div>:(
+          <table className="report-table">
+            <thead><tr><th>Category</th><th>Amount</th><th>% of Total</th></tr></thead>
+            <tbody>
+              {catRows.map(([cat,amt])=>(
+                <tr key={cat}>
+                  <td>{cat}</td>
+                  <td className="mono">{fmt(amt)}</td>
+                  <td><div style={{display:'flex',alignItems:'center',gap:8}}><div style={{width:60,height:4,background:'var(--border)',borderRadius:2}}><div style={{width:`${(amt/totExp*100).toFixed(0)}%`,height:'100%',background:'var(--black)',borderRadius:2}}/></div>{(amt/totExp*100).toFixed(1)}%</div></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>)}
+        </div>
+        <div className="section-card">
+          <div className="chart-label">Recurring Transactions</div>
+          {recurring.length===0?<div style={{color:'var(--text-dim)',fontSize:'0.84rem'}}>No recurring transactions.</div>:(
+          <table className="report-table">
+            <thead><tr><th>Title</th><th>Type</th><th>Amount</th></tr></thead>
+            <tbody>
+              {recurring.map(t=>(
+                <tr key={t.id}>
+                  <td>{t.title}</td>
+                  <td><span className={`badge ${t.type}`}>{t.type}</span></td>
+                  <td className={`amount-cell ${t.type==='income'?'inc':'exp'}`} style={{fontFamily:'var(--mono)',fontSize:'0.82rem'}}>{t.type==='income'?'+':'-'}{fmt(t.amount)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── SETTINGS PAGE ─────────────────────────────────────────────────────────────
+function Settings({user,onLogout,onClear}){
+  const [notif,setNotif]=useState(true);
+  const [darkM,setDarkM]=useState(false);
+  const [currency,setCurrency]=useState('INR');
+
+  return(
+    <div className="fade-in">
+      <div className="page-header">
+        <div className="page-title">Settings</div>
+        <div className="page-sub">Manage your account and preferences</div>
+      </div>
+      <div className="settings-section">
+        <h3>Account</h3>
+        <div className="settings-row"><span className="settings-label">Full Name</span><span className="settings-val">{user.name}</span></div>
+        <div className="settings-row"><span className="settings-label">Email</span><span className="settings-val">{user.email}</span></div>
+        <div className="settings-row"><span className="settings-label">User ID</span><span className="settings-val" style={{fontFamily:'var(--mono)',fontSize:'0.78rem'}}>{user.id}</span></div>
+      </div>
+      <div className="settings-section">
+        <h3>Preferences</h3>
+        <div className="settings-row"><span className="settings-label">Currency</span>
+          <select value={currency} onChange={e=>setCurrency(e.target.value)} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:4,padding:'5px 10px',color:'var(--text)',fontFamily:'var(--font)',fontSize:'0.82rem'}}>
+            <option value="INR">INR — Indian Rupee (₹)</option>
+            <option value="USD">USD — US Dollar ($)</option>
+            <option value="EUR">EUR — Euro (€)</option>
+          </select>
+        </div>
+        <div className="settings-row"><span className="settings-label">Budget Alerts</span><button className={`toggle ${notif?'on':''}`} onClick={()=>setNotif(p=>!p)}/></div>
+        <div className="settings-row"><span className="settings-label">Dark Mode (coming soon)</span><button className="toggle" disabled style={{opacity:.4}}/></div>
+      </div>
+      <div className="settings-section">
+        <h3>Data</h3>
+        <div className="settings-row"><span className="settings-label">Storage</span><span className="settings-val">Stored locally in browser</span></div>
+        <div className="settings-row"><span className="settings-label">Clear all data</span><button className="tb-btn" style={{color:'var(--expense-text)',borderColor:'var(--expense-border)'}} onClick={onClear}>Clear Data</button></div>
+      </div>
+      <div className="settings-section">
+        <h3>About</h3>
+        <div className="settings-row"><span className="settings-label">Application</span><span className="settings-val">Spendwise v2.0</span></div>
+        <div className="settings-row"><span className="settings-label">Version</span><span className="settings-val" style={{fontFamily:'var(--mono)',fontSize:'0.78rem'}}>2.0.0 — March 2026</span></div>
+      </div>
+      <button className="logout-btn" style={{maxWidth:200}} onClick={onLogout}>Sign Out</button>
+    </div>
+  );
+}
+
+// ── APP ───────────────────────────────────────────────────────────────────────
+function App(){
+  const [user,setUser]=useLS('sw_user2',null);
+  const [txns,setTxns]=useLS('sw_txns2',null);
+  const [page,setPage]=useState('dashboard');
+  const [modal,setModal]=useState(null);
+
+  useEffect(()=>{if(user&&txns===null)setTxns(genSampleData());},[user]);
+
+  const logout=()=>{setUser(null);setTxns(null);setPage('dashboard');};
+  const clearData=()=>{if(confirm('Clear all transaction data? This cannot be undone.'))setTxns([]);};
+  const openAdd=()=>setModal({type:'add'});
+  const openEdit=t=>setModal({type:'edit',tx:t});
+  const closeModal=()=>setModal(null);
+  const saveTx=t=>{setTxns(p=>modal.type==='edit'?p.map(x=>x.id===t.id?t:x):[t,...p]);closeModal();};
+  const deleteTx=id=>{if(confirm('Delete this transaction?'))setTxns(p=>p.filter(x=>x.id!==id));};
+
+  if(!user) return <Auth onLogin={u=>{setUser(u);}}/>;
+  if(!txns) return null;
+
+  const nav=[
+    {id:'dashboard',     label:'Dashboard',     Icon:Icon.dashboard},
+    {id:'transactions',  label:'Transactions',  Icon:Icon.transactions},
+    {id:'budgets',       label:'Budgets',       Icon:Icon.budget},
+    {id:'goals',         label:'Goals',         Icon:Icon.goals},
+    {id:'reports',       label:'Reports',       Icon:Icon.reports},
+    {id:'settings',      label:'Settings',      Icon:Icon.settings},
+  ];
+
+  const initials=user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const urgentBudgets = (() => {
+    const now=new Date();
+    const exp=txns.filter(t=>{const d=new Date(t.date);return t.type==='expense'&&d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+    return (JSON.parse(localStorage.getItem('sw_budgets')||'[]')||[]).filter(b=>exp.filter(t=>t.category===b.category).reduce((s,t)=>s+t.amount,0)>=b.limit*0.8).length;
+  })();
+
+  return(
+    <div className="app">
+      <aside className="sidebar">
+        <div className="logo">Spendwise</div>
+        <div className="user-card">
+          <div className="uc-row">
+            <div className="avatar">{initials}</div>
+            <div><div className="uc-name">{user.name}</div><div className="uc-email">{user.email}</div></div>
+          </div>
+        </div>
+        <div className="nav-section">Navigation</div>
+        {nav.map(n=>(
+          <button key={n.id} className={`nav-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+            <n.Icon/>
+            {n.label}
+            {n.id==='budgets'&&urgentBudgets>0&&<span className="nav-badge">{urgentBudgets}</span>}
+          </button>
+        ))}
+        <div className="sidebar-footer">
+          <button className="logout-btn" onClick={logout}>Sign Out</button>
+        </div>
+      </aside>
+
+      <main className="main">
+        {page==='dashboard'&&<Dashboard txns={txns} onAdd={openAdd}/>}
+        {page==='transactions'&&<Transactions txns={txns} onAdd={openAdd} onEdit={openEdit} onDelete={deleteTx}/>}
+        {page==='budgets'&&<Budgets txns={txns}/>}
+        {page==='goals'&&<Goals/>}
+        {page==='reports'&&<Reports txns={txns}/>}
+        {page==='settings'&&<Settings user={user} onLogout={logout} onClear={clearData}/>}
+      </main>
+
+      <nav className="mob-nav">
+        {nav.slice(0,5).map(n=>(
+          <button key={n.id} className={`mob-item ${page===n.id?'active':''}`} onClick={()=>setPage(n.id)}>
+            <n.Icon/>{n.label}
+          </button>
+        ))}
+      </nav>
+
+      {modal&&<TxModal tx={modal.tx} onSave={saveTx} onClose={closeModal}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
