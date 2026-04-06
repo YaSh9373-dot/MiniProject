@@ -304,6 +304,7 @@ body.dark input::placeholder{color:var(--text-dim)!important;}
 /* ── ACCESSIBILITY: focus ring ── */
 :focus-visible{outline:2px solid var(--black);outline-offset:2px;}
 button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--black);outline-offset:2px;}
+button:disabled{opacity:0.4;cursor:not-allowed;}
 </style>
 </head>
 <body>
@@ -350,7 +351,7 @@ const GOAL_DEFAULTS = [
 const CURRENCY_SYMBOLS = {INR:'₹', USD:'$', EUR:'€'};
 const CURRENCY_LOCALES  = {INR:'en-IN', USD:'en-US', EUR:'de-DE'};
 const fmt = n => {
-  const cur = (typeof localStorage !== 'undefined' && localStorage.getItem('sw_currency_val')) || 'INR';
+  const cur = localStorage.getItem('sw_currency_val') || 'INR';
   return (CURRENCY_SYMBOLS[cur] || '₹') + Math.abs(n).toLocaleString(CURRENCY_LOCALES[cur] || 'en-IN');
 };
 const fmtDate = d => new Date(d).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
@@ -456,8 +457,8 @@ function TxModal({tx,onSave,onClose}){
   };
 
   return(
-    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()} role="dialog" aria-modal="true" aria-label={tx?'Edit Transaction':'New Transaction'}>
-      <div className="modal fade-in">
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal fade-in" role="dialog" aria-modal="true" aria-label={tx?'Edit Transaction':'New Transaction'}>
         <div className="modal-title">{tx?'Edit Transaction':'New Transaction'}</div>
         <div className="type-toggle">
           <button className={`type-btn expense ${type==='expense'?'active':''}`} onClick={()=>{setType('expense');setCategory('');}}>Expense</button>
@@ -652,8 +653,6 @@ function Transactions({txns,onAdd,onEdit,onDelete}){
   const [pageNum,setPageNum]=useState(1);
   const PER_PAGE=20;
 
-  const allCats = useMemo(()=>['all',...new Set(txns.map(t=>t.category))],[txns]);
-
   const sorted = useMemo(()=>{
     let list = txns.filter(t=>{
       if(filter!=='all'&&t.type!==filter)return false;
@@ -681,18 +680,19 @@ function Transactions({txns,onAdd,onEdit,onDelete}){
   const totalInc = sorted.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
   const totalExp = sorted.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
 
+  const csvQuote=v=>`"${String(v||'').replace(/"/g,'""')}"`;
   const exportCSV=()=>{
     const headers=['Date','Title','Category','Type','Amount','Note','Recurring'];
     const rows=sorted.map(t=>[
-      t.date,
-      `"${(t.title||'').replace(/"/g,'""')}"`,
-      t.category,
-      t.type,
+      csvQuote(t.date),
+      csvQuote(t.title),
+      csvQuote(t.category),
+      csvQuote(t.type),
       t.amount,
-      `"${(t.note||'').replace(/"/g,'""')}"`,
-      t.recurring?'Yes':'No'
+      csvQuote(t.note),
+      csvQuote(t.recurring?'Yes':'No')
     ]);
-    const csv=[headers,...rows].map(r=>r.join(',')).join('\n');
+    const csv=[headers.map(csvQuote),...rows].map(r=>r.join(',')).join('\n');
     const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
@@ -766,9 +766,9 @@ function Transactions({txns,onAdd,onEdit,onDelete}){
               {(pageNum-1)*PER_PAGE+1}–{Math.min(pageNum*PER_PAGE,sorted.length)} of {sorted.length}
             </span>
             <div style={{display:'flex',gap:6}}>
-              <button className="tb-btn" onClick={()=>setPageNum(p=>Math.max(1,p-1))} disabled={pageNum===1} aria-label="Previous page" style={{opacity:pageNum===1?.4:1}}>← Prev</button>
+              <button className="tb-btn" onClick={()=>setPageNum(p=>Math.max(1,p-1))} disabled={pageNum===1} aria-label="Previous page">← Prev</button>
               <span style={{padding:'7px 12px',fontSize:'0.78rem',color:'var(--text-mid)',fontFamily:'var(--mono)'}}>{pageNum}/{totalPages}</span>
-              <button className="tb-btn" onClick={()=>setPageNum(p=>Math.min(totalPages,p+1))} disabled={pageNum===totalPages} aria-label="Next page" style={{opacity:pageNum===totalPages?.4:1}}>Next →</button>
+              <button className="tb-btn" onClick={()=>setPageNum(p=>Math.min(totalPages,p+1))} disabled={pageNum===totalPages} aria-label="Next page">Next →</button>
             </div>
           </div>
         )}
@@ -880,7 +880,7 @@ function Goals(){
 
       {modal!==null&&(
         <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setModal(null)}>
-          <div className="modal fade-in">
+          <div className="modal fade-in" role="dialog" aria-modal="true" aria-label={modal.id?'Edit Goal':'New Savings Goal'}>
             <div className="modal-title">{modal.id?'Edit Goal':'New Savings Goal'}</div>
             <GoalForm goal={modal} onSave={saveGoal} onClose={()=>setModal(null)}/>
           </div>
